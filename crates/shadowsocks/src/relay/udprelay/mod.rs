@@ -50,11 +50,14 @@
 use std::time::Duration;
 
 pub use self::proxy_socket::ProxySocket;
+pub use compat::{DatagramReceive, DatagramReceiveExt, DatagramSend, DatagramSendExt, DatagramSocket};
 
+#[cfg(feature = "aead-cipher")]
 mod aead;
 #[cfg(feature = "aead-cipher-2022")]
 mod aead_2022;
-mod crypto_io;
+mod compat;
+pub mod crypto_io;
 pub mod options;
 pub mod proxy_socket;
 #[cfg(feature = "stream-cipher")]

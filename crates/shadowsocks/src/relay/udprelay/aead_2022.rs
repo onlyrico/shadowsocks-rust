@@ -58,9 +58,7 @@ use std::{
 
 use aes::{
     cipher::{BlockDecrypt, BlockEncrypt, KeyInit},
-    Aes128,
-    Aes256,
-    Block,
+    Aes128, Aes256, Block,
 };
 use byte_string::ByteStr;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
@@ -101,7 +99,7 @@ pub enum ProtocolError {
     InvalidClientUser(Bytes),
     #[error("invalid socket type, expecting {0:#x}, but found {1:#x}")]
     InvalidSocketType(u8, u8),
-    #[error("invalid timestamp {0} - now {1} = {}", *.0 as i64 - *.1 as i64)]
+    #[error("invalid timestamp {0} - now {1} = {ts_diff}", ts_diff = *.0 as i64 - *.1 as i64)]
     InvalidTimestamp(u64, u64),
     #[error(transparent)]
     IoError(#[from] io::Error),
@@ -119,18 +117,7 @@ struct CipherKey {
 
 impl PartialOrd for CipherKey {
     fn partial_cmp(&self, other: &CipherKey) -> Option<Ordering> {
-        let hash1 = {
-            let mut hasher = DefaultHasher::new();
-            self.hash(&mut hasher);
-            hasher.finish()
-        };
-        let hash2 = {
-            let mut hasher = DefaultHasher::new();
-            other.hash(&mut hasher);
-            hasher.finish()
-        };
-
-        hash1.partial_cmp(&hash2)
+        Some(self.cmp(other))
     }
 }
 

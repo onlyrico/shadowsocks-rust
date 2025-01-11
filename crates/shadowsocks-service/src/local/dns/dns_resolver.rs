@@ -2,16 +2,15 @@
 
 use std::{
     io::{self, ErrorKind},
-    net::SocketAddr,
+    net::{Ipv4Addr, Ipv6Addr, SocketAddr},
 };
 
-use async_trait::async_trait;
 use futures::future;
-use log::{debug, trace};
-use trust_dns_resolver::proto::{
+use hickory_resolver::proto::{
     op::{Message, Query},
     rr::{DNSClass, Name, RData, RecordType},
 };
+use log::{debug, trace};
 
 use shadowsocks::{config::Mode, dns_resolver::DnsResolve, net::ConnectOpts};
 
@@ -104,7 +103,6 @@ impl DnsResolver {
     }
 }
 
-#[async_trait]
 impl DnsResolve for DnsResolver {
     async fn resolve(&self, host: &str, port: u16) -> io::Result<Vec<SocketAddr>> {
         let mut name = Name::from_utf8(host)?;
@@ -175,12 +173,11 @@ fn store_dns(res: Message, port: u16) -> Vec<SocketAddr> {
     let mut vaddr = Vec::new();
     for record in res.answers() {
         match record.data() {
-            Some(RData::A(addr)) => vaddr.push(SocketAddr::new((*addr).into(), port)),
-            Some(RData::AAAA(addr)) => vaddr.push(SocketAddr::new((*addr).into(), port)),
-            Some(rdata) => {
+            RData::A(addr) => vaddr.push(SocketAddr::new(Ipv4Addr::from(*addr).into(), port)),
+            RData::AAAA(addr) => vaddr.push(SocketAddr::new(Ipv6Addr::from(*addr).into(), port)),
+            rdata => {
                 trace!("skipped rdata {:?}", rdata);
             }
-            None => {}
         }
     }
     vaddr
